@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+		<title>HTML Live Editor</title>
+		<link href="https://prophosting.com/jules/style44.css" rel="stylesheet" />
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+	</head>
+	<body>
+<!-- =================================================================
+        1. TOP TOOLBAR (GLOBAL ACTIONS)
+        ================================================================== -->		<div class="top-toolbar" id="topToolbar">
+			<div class="top-toolbar-left">
+				<button class="btn-top-toolbar" id="scrollToBottomBtn">HTML</button><button class="btn-top-toolbar" onclick="syncHtml()">Sync HTML</button><button class="btn-top-toolbar" disabled="disabled" id="undoBtn" onclick="undo()">Undo</button><button class="btn-top-toolbar" disabled="disabled" id="redoBtn" onclick="redo()">Redo</button><button class="btn-top-toolbar" onclick="clearAll()">Clear All</button></div>
+			<div class="top-toolbar-right">
+				<button class="btn-top-toolbar" onclick="downloadHtml()">Download</button><button class="btn-top-toolbar" onclick="toggleView('mobile')">Mobile</button><button class="btn-top-toolbar" onclick="toggleView('tablet')">Tablet</button><button class="btn-top-toolbar" onclick="toggleView('desktop')">Desktop</button><span class="badge bg-success" id="editingStatus">Editing Enabled</span></div>
+		</div>
+<!-- =================================================================
+        2. CONTEXTUAL TEXT TOOLBAR
+        ================================================================== -->		<div class="contextual-text-toolbar" id="textToolbar" style="display: none;">
+			<select id="tagSelector" title="Element Type"></select> <select id="fontSelect" title="Font Family"></select> <input id="fontSize" min="1" title="Font Size" type="number" /> <input id="textColor" title="Text Color" type="color" /><button id="boldBtn" title="Bold"></button><button id="italicBtn" title="Italic"></button><button id="underlineBtn" title="Underline"></button>
+			<div class="toolbar-divider">
+				&nbsp;</div>
+			<button id="textAlignLeft" title="Align Left"></button><button id="textAlignCenter" title="Align Center"></button><button id="textAlignRight" title="Align Right"></button><button id="textAlignJustify" title="Align Justify"></button></div>
+<!-- =================================================================
+        3. MAIN WRAPPER (Sidebar + Preview)
+        ================================================================== -->		<div class="main-wrapper">
+			<div class="left-sidebar" id="elementInspector">
+				<div class="inspector-header">
+					<h3>
+						Element Inspector</h3>
+					<button id="sidebar-toggle-btn" title="Toggle Sidebar"></button></div>
+				<div class="add-section-area">
+					<button class="add-section-btn" onclick="openSectionModal('library')">Add Section</button></div>
+				<div id="inspector-content">
+					<div class="inspector-header-status">
+						<span id="elementTagName">Nothing selected</span></div>
+					<div id="inspectorDefaultMessage">
+						<p>
+							Click an element in the live preview to see its properties.</p>
+					</div>
+					<div class="hidden" id="inspectorControls">
+						<div class="control-group" id="applyToAllGroup" style="display: none;">
+							<label class="switch-label"><span id="applyToAllLabel">Apply to all</span> <label class="switch"> <input id="applyToAllToggle" type="checkbox" /> <span class="slider round"></span> </label> </label></div>
+						<div class="control-group" id="responsiveControlGroup" style="display: none;">
+							<label class="switch-label">Responsive Edits <label class="switch"> <input id="responsiveToggle" type="checkbox" /> <span class="slider round"></span> </label> </label></div>
+						<div class="action-buttons">
+							<button class="action-btn delete" onclick="deleteElement()" title="Delete Element">Delete</button><button class="action-btn copy" onclick="copyElement()" title="Copy Element">Copy</button><button class="action-btn flip" onclick="flipElement()" title="Flip Layout">Flip</button></div>
+<!-- Accordions -->						<div class="accordion-item">
+							<h2 class="accordion-header">
+								<button class="accordion-button" data-bs-target="#collapseArrange" data-bs-toggle="collapse">Arrange</button></h2>
+							<div class="accordion-collapse collapse show" id="collapseArrange">
+								<div class="accordion-body">
+									<div class="arrange-controls">
+										<button id="moveUpBtn">Up</button><button id="moveDownBtn">Down</button><button id="moveLeftBtn">Left</button><button id="moveRightBtn">Right</button></div>
+								</div>
+							</div>
+						</div>
+						<div class="accordion-item">
+							<h2 class="accordion-header">
+								<button class="accordion-button" data-bs-target="#collapseContent" data-bs-toggle="collapse">Content</button></h2>
+							<div class="accordion-collapse collapse show" id="collapseContent">
+								<div class="accordion-body">
+									<div class="control-group" id="textControlGroup">
+										<label for="textContentInput">Text</label><textarea id="textContentInput" rows="3"></textarea></div>
+									<div class="control-group" id="imageControlGroup">
+										<label for="imageUrlInput">Image Source</label> <input id="imageUrlInput" type="text" /> <label for="imageAltInput">Alt Text</label> <input id="imageAltInput" type="text" /></div>
+									<div class="control-group" id="linkControlGroup">
+										<label for="linkUrlInput">Link URL</label> <input id="linkUrlInput" type="text" /> <label class="switch-label"> <span>Open in new window</span> <label class="switch"> <input id="linkTargetToggle" type="checkbox" /> <span class="slider round"></span> </label> </label></div>
+									<div class="control-group" id="iconControlGroup">
+										<label>Icon</label><button onclick="openHeroiconsModal()">Replace Icon</button>
+										<hr />
+										<label for="iconSizeInput">Size (px)</label> <input class="full-width-input" id="iconSizeInput" min="1" type="number" /> <label for="iconColorInput">Color</label> <input id="iconColorInput" type="color" /></div>
+								</div>
+							</div>
+						</div>
+						<div class="accordion-item">
+							<h2 class="accordion-header">
+								<button class="accordion-button" data-bs-target="#collapseSize" data-bs-toggle="collapse">Size</button></h2>
+							<div class="accordion-collapse collapse show" id="collapseSize">
+								<div class="accordion-body">
+									<div class="control-group" id="sizeControlGroup">
+										<div class="size-grid">
+											<label for="widthInput">Width</label> <input id="widthInput" placeholder="auto" type="text" /> <label for="heightInput">Height</label> <input id="heightInput" placeholder="auto" type="text" /></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="accordion-item">
+							<h2 class="accordion-header">
+								<button class="accordion-button" data-bs-target="#collapseVisibility" data-bs-toggle="collapse">Visibility</button></h2>
+							<div class="accordion-collapse collapse show" id="collapseVisibility">
+								<div class="accordion-body">
+									<label for="displayProperty">Display</label> <select class="full-width-input" id="displayProperty"><option value="block">Block</option><option value="inline-block">Inline-Block</option><option value="inline">Inline</option><option value="flex">Flex</option><option value="grid">Grid</option><option value="none">None (Hidden)</option></select></div>
+							</div>
+						</div>
+						<div class="accordion-item">
+							<h2 class="accordion-header">
+								<button class="accordion-button" data-bs-target="#collapseTypography" data-bs-toggle="collapse">Typography</button></h2>
+							<div class="accordion-collapse collapse show" id="collapseTypography">
+								<div class="accordion-body">
+									<div class="typography-grid">
+										<label for="lineHeight">Line Height</label> <input id="lineHeight" min="0" step="0.1" type="number" /> <label for="letterSpacing">Letter Spacing</label> <input id="letterSpacing" step="0.1" type="number" /></div>
+									<label for="textTransform">Transform</label> <select class="full-width-input" id="textTransform"><option value="none">None</option><option value="capitalize">Capitalize</option><option value="uppercase">Uppercase</option><option value="lowercase">Lowercase</option></select></div>
+							</div>
+						</div>
+						<div class="accordion-item">
+							<h2 class="accordion-header">
+								<button class="accordion-button" data-bs-target="#collapseBackground" data-bs-toggle="collapse">Background</button></h2>
+							<div class="accordion-collapse collapse show" id="collapseBackground">
+								<div class="accordion-body">
+									<label>Solid Color</label> <input id="bgColorInput" type="color" />
+									<hr />
+									<label>Gradient</label>
+									<div class="gradient-controls">
+										<input id="gradientColor1" type="color" value="#3b82f6" /> <input id="gradientColor2" type="color" value="#1d4ed8" /> <input id="gradientColor3" type="color" value="#1e3a8a" /></div>
+									<select id="gradientDirection"></select>
+									<div id="hoverControlGroup" style="display: none;">
+										<hr />
+										<label>Hover Background Color</label> <input id="hoverColorInput" type="color" /> <label>Hover Text Color</label> <input id="hoverTextColorInput" type="color" /></div>
+								</div>
+							</div>
+						</div>
+						<div class="accordion-item">
+							<h2 class="accordion-header">
+								<button class="accordion-button" data-bs-target="#collapseAppearance" data-bs-toggle="collapse">Appearance</button></h2>
+							<div class="accordion-collapse collapse show" id="collapseAppearance">
+								<div class="accordion-body">
+									<label for="opacityInput">Opacity</label> <input class="full-width-input" id="opacityInput" max="1" min="0" step="0.1" type="range" />
+									<hr />
+									<label>Border</label>
+									<div class="border-controls">
+										<input id="borderWidth" min="0" title="Width (px)" type="number" /> <select id="borderStyle"><option>solid</option><option>dashed</option><option>dotted</option><option>none</option></select> <input id="borderColor" title="Color" type="color" /></div>
+									<label for="borderRadius">Border Radius (px)</label> <input class="full-width-input" id="borderRadius" min="0" type="number" />
+									<hr />
+									<div class="control-group">
+										<label class="switch-label">Box Shadow <label class="switch"> <input id="boxShadowToggle" type="checkbox" /> <span class="slider round"></span> </label> </label></div>
+									<div class="control-group">
+										<label class="switch-label">Glow Effect (on Hover/Focus) <label class="switch"> <input id="glowEffectToggle" type="checkbox" /> <span class="slider round"></span> </label> </label></div>
+									<div id="fieldHoverControlGroup" style="display: none;">
+										<hr />
+										<div class="compact-color-grid">
+											<label>Hover Border</label> <input id="hoverBorderColorInput" type="color" /> <label>Hover Background</label> <input id="hoverBgColorInput" type="color" /></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="accordion-item">
+							<h2 class="accordion-header">
+								<button class="accordion-button" data-bs-target="#collapseSpacing" data-bs-toggle="collapse">Spacing</button></h2>
+							<div class="accordion-collapse collapse show" id="collapseSpacing">
+								<div class="accordion-body">
+									<label>Padding (px)</label>
+									<div class="spacing-grid-labeled">
+										<input id="paddingTop" type="number" /> <label for="paddingTop">Top</label> <input id="paddingRight" type="number" /> <label for="paddingRight">Right</label> <input id="paddingBottom" type="number" /> <label for="paddingBottom">Bottom</label> <input id="paddingLeft" type="number" /> <label for="paddingLeft">Left</label></div>
+									<hr />
+									<label>Margin (px)</label>
+									<div class="spacing-grid-labeled">
+										<input id="marginTop" type="number" /> <label for="marginTop">Top</label> <input id="marginRight" type="number" /> <label for="marginRight">Right</label> <input id="marginBottom" type="number" /> <label for="marginBottom">Bottom</label> <input id="marginLeft" type="number" /> <label for="marginLeft">Left</label></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="preview-area-wrapper">
+				<div class="html-preview">
+					<iframe id="previewFrame"></iframe></div>
+			</div>
+		</div>
+		<div class="html-code-editor-section" id="htmlCodeEditorSection">
+			<h3>
+				HTML Code</h3>
+			<textarea id="htmlInputBottom" placeholder="Your site's HTML will appear here after syncing..."></textarea>
+			<div class="html-editor-actions">
+				<button class="btn-primary" onclick="updatePreviewFromBottom()">Preview</button><button class="btn-secondary" id="scrollToTopBtn">Back to Top</button></div>
+		</div>
+		<div class="modal-overlay" id="heroiconsModal" style="display: none;">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h2>
+						Select an Icon</h2>
+					<button class="close-btn" onclick="closeHeroiconsModal()">&times;</button></div>
+				<div class="modal-toolbar">
+					<div class="icon-style-tabs">
+						<button class="active" id="outlineTab">Outline</button><button id="solidTab">Solid</button></div>
+					<input id="iconSearchInput" placeholder="Search icons..." type="text" /></div>
+				<div class="modal-body-container">
+					<div class="modal-sidebar" id="iconCategories">
+						&nbsp;</div>
+					<div class="modal-body" id="heroiconsGrid">
+						&nbsp;</div>
+				</div>
+			</div>
+		</div>
+		<div class="modal-overlay" id="sectionModal" style="display: none;">
+			<div class="modal-content large" id="sectionModalContent">
+				<div class="modal-header">
+					<h2 id="sectionModalTitle">
+						Add a New Section</h2>
+					<button class="close-btn" onclick="closeSectionModal()">&times;</button></div>
+				<div class="modal-body" id="sectionModalBody">
+					&nbsp;</div>
+			</div>
+		</div>
+		<div id="status">
+			&nbsp;</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/tinycolor/1.6.0/tinycolor.min.js"></script><script src="https://prophosting.com/jules/script44.js"></script>	</body>
+</html>
