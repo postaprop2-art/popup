@@ -2952,7 +2952,7 @@ window.createFormSection = function() {
                                     const r = Math.min(255, parseInt(rgb[0]) + 20);
                                     const g = Math.min(255, parseInt(rgb[1]) + 20);
                                     const b = Math.min(255, parseInt(rgb[2]) + 20);
-                                    this.style.backgroundColor = \`rgb(\${r}, \${g}, \${b})\`;
+                                    this.style.backgroundColor = 'rgb(' + r + ', ' + g + ', ' + b + ')';
                                 }
                             }
                             
