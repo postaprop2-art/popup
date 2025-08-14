@@ -2483,13 +2483,15 @@ window.createFormSection = function() {
     }
 
     function attachToSingleButton(buttonElement, popupId) {
-        buttonElement.setAttribute('data-popup-id', popupId);
-        buttonElement.setAttribute('onclick', `showModernPopup('${popupId}'); return false;`);
+        buttonElement.setAttribute('data-popup-trigger', popupId);
+        // The old data-popup-id attribute is no longer needed.
+        buttonElement.removeAttribute('data-popup-id');
+        // The onclick attribute is also no longer set.
+        buttonElement.removeAttribute('onclick');
 
         const parentLink = buttonElement.closest('a');
         if (parentLink) {
-            parentLink.setAttribute('href', 'javascript:void(0);');
-            parentLink.setAttribute('onclick', `return false;`);
+            parentLink.removeAttribute('onclick');
         }
     }
 // Generate popup HTML based on template and options
@@ -2903,71 +2905,83 @@ window.createFormSection = function() {
             const script = document.createElement('script');
             script.id = 'modern-popup-script';
             script.textContent = `
-                function showModernPopup(popupId) {
-                    const popup = document.getElementById(popupId);
-                    if (!popup) return;
-                    
-                    popup.style.display = 'block';
-                    
-                    // Add close handlers
-                    const closeBtn = popup.querySelector('.popup-close');
-                    if (closeBtn) {
-                        closeBtn.onclick = function() {
-                            popup.style.display = 'none';
-                        };
-                    }
-                    
-                    // Close on overlay click
-                    const overlay = popup.querySelector('.popup-overlay');
-                    if (overlay) {
-                        overlay.onclick = function(e) {
-                            if (e.target === this) {
-                                popup.style.display = 'none';
-                            }
-                        };
-                    }
-                    
-                    // Setup form fields focus effects
-                    const formFields = popup.querySelectorAll('input, textarea');
-                    formFields.forEach(field => {
-                        field.onfocus = function() {
-                            this.style.borderColor = '#4f46e5';
-                            this.style.boxShadow = '0 0 0 3px rgba(79, 70, 229, 0.1)';
-                        };
-                        
-                        field.onblur = function() {
-                            this.style.borderColor = '';
-                            this.style.boxShadow = '';
-                        };
-                    });
-                    
-                    // Setup button hover effects
-                    const buttons = popup.querySelectorAll('button[type="submit"]');
-                    buttons.forEach(button => {
-                        button.onmouseover = function() {
-                            if (this.style.backgroundColor && this.style.backgroundColor.includes('rgb')) {
-                                // Lighten RGB color
-                                const rgb = this.style.backgroundColor.match(/\\d+/g);
-                                if (rgb && rgb.length >= 3) {
-                                    const r = Math.min(255, parseInt(rgb[0]) + 20);
-                                    const g = Math.min(255, parseInt(rgb[1]) + 20);
-                                    const b = Math.min(255, parseInt(rgb[2]) + 20);
-                                    this.style.backgroundColor = 'rgb(' + r + ', ' + g + ', ' + b + ')';
-                                }
-                            }
-                            
-                            // Enhance shadow
-                            this.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
-                            this.style.transform = 'translateY(-1px)';
-                        };
-                        
-                        button.onmouseout = function() {
-                            // Reset changes
-                            this.style.boxShadow = '';
-                            this.style.transform = '';
-                        };
-                    });
+(function() {
+    function showModernPopup(popupId) {
+        const popup = document.getElementById(popupId);
+        if (!popup) return;
+
+        popup.style.display = 'block';
+
+        const closeBtn = popup.querySelector('.popup-close');
+        if (closeBtn) {
+            closeBtn.onclick = function() {
+                popup.style.display = 'none';
+            };
+        }
+
+        const overlay = popup.querySelector('.popup-overlay');
+        if (overlay) {
+            overlay.onclick = function(e) {
+                if (e.target === this) {
+                    popup.style.display = 'none';
                 }
+            };
+        }
+
+        const formFields = popup.querySelectorAll('input, textarea');
+        formFields.forEach(field => {
+            field.onfocus = function() {
+                this.style.borderColor = '#4f46e5';
+                this.style.boxShadow = '0 0 0 3px rgba(79, 70, 229, 0.1)';
+            };
+            field.onblur = function() {
+                this.style.borderColor = '';
+                this.style.boxShadow = '';
+            };
+        });
+
+        const buttons = popup.querySelectorAll('button[type="submit"]');
+        buttons.forEach(button => {
+            button.onmouseover = function() {
+                if (this.style.backgroundColor && this.style.backgroundColor.includes('rgb')) {
+                    const rgb = this.style.backgroundColor.match(/\\d+/g);
+                    if (rgb && rgb.length >= 3) {
+                        const r = Math.min(255, parseInt(rgb[0]) + 20);
+                        const g = Math.min(255, parseInt(rgb[1]) + 20);
+                        const b = Math.min(255, parseInt(rgb[2]) + 20);
+                        this.style.backgroundColor = 'rgb(' + r + ', ' + g + ', ' + b + ')';
+                    }
+                }
+                this.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+                this.style.transform = 'translateY(-1px)';
+            };
+            button.onmouseout = function() {
+                this.style.boxShadow = '';
+                this.style.transform = '';
+            };
+        });
+    }
+
+    function attachPopupListeners() {
+        document.querySelectorAll('[data-popup-trigger]').forEach(trigger => {
+            if (trigger.dataset.popupListenerAttached) return;
+            trigger.dataset.popupListenerAttached = 'true';
+
+            trigger.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const popupId = this.getAttribute('data-popup-trigger');
+                showModernPopup(popupId);
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachPopupListeners);
+    } else {
+        attachPopupListeners();
+    }
+})();
             `;
             iframeDoc.body.appendChild(script);
         }
@@ -2976,7 +2990,7 @@ window.createFormSection = function() {
         if (!iframeDoc.getElementById('modern-popup-styles')) {
             const style = document.createElement('style');
             style.id = 'modern-popup-styles';
-style.textContent = `
+style.textContent = \`
     @media (max-width: 768px) {
         /* Basic mobile styling */
         .popup-content {
@@ -3043,7 +3057,7 @@ style.textContent = `
             align-items: center !important;
         }
     }
-`;
+\`;
             iframeDoc.head.appendChild(style);
         }
     }
