@@ -1449,6 +1449,26 @@ window.createFormSection = function() {
     
     // Open popup creator when button is clicked
     popupBtn.addEventListener('click', openPopupCreator);
+
+    function isClickableButton(el){
+        if (!el || el.nodeType !== 1) return false;
+        const tag = el.tagName.toLowerCase();
+        const cls = (el.className || '').toString();
+        const role = el.getAttribute('role');
+        const isButtony = (tag==='button') || (tag==='a' && (el.hasAttribute('href') || role==='button'));
+        const looksLikeCTA = /(btn|button|cta|call\-to\-action)/i.test(cls);
+        const hasClick = !!(el.onclick || el.getAttribute('onclick'));
+        return isButtony || looksLikeCTA || hasClick || role==='button';
+    }
+
+    function findButtonCandidate(startEl){
+        let el = startEl, depth = 0;
+        while (el && depth < 5){ // Increased depth to 5 for more flexibility
+            if (isClickableButton(el)) return el;
+            el = el.parentElement; depth++;
+        }
+        return null;
+    }
     
     // Function to open popup creator
     function openPopupCreator() {
@@ -1960,35 +1980,32 @@ window.createFormSection = function() {
             function handleButtonSelection(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                const target = e.target;
-                if (target.tagName === 'BUTTON' || 
-                    (target.tagName === 'A' && target.classList.contains('btn')) || 
-                    (target.tagName === 'A' && target.querySelector('button'))) {
-                    
-                    // Get the actual button (in case of nested elements)
-                    selectedButton = target.tagName === 'A' && target.querySelector('button') ? 
-                                    target.querySelector('button') : target;
-                    
+
+                const button = findButtonCandidate(e.target);
+
+                if (button) {
+                    selectedButton = button;
+
                     // Remove instructions
                     instructionDiv.remove();
-                    
+
                     // Show modal again
                     overlay.style.display = 'flex';
-                    
+
                     // Update selected button info
                     selectedButtonInfo.innerHTML = `
-                        <div style="font-weight: 600; color: #374151; margin-bottom: 4px;">Selected: ${selectedButton.tagName}</div>
-                        <div style="font-size: 12px; color: #6b7280; word-break: break-word;">${selectedButton.innerText || 'No text'}</div>
+                        <div style="font-weight: 600; color: #374151; margin-bottom: 4px;">Selected: &lt;${selectedButton.tagName.toLowerCase()}&gt;</div>
+                        <div style="font-size: 12px; color: #6b7280; word-break: break-word;">${(selectedButton.innerText || '').trim() || 'No text'}</div>
                     `;
                     selectedButtonInfo.style.background = '#f0fdf4';
                     selectedButtonInfo.style.borderLeft = '3px solid #10b981';
-                    
+
                     // Show step 2
                     document.querySelector('.creator-step[data-step="2"]').style.display = 'block';
-                    
-                    // Remove event listener
+
+                    // Remove event listeners
                     iframeDoc.removeEventListener('click', handleButtonSelection, true);
+                    window.removeEventListener('keydown', handleCancel);
                 }
             }
             
@@ -2411,43 +2428,35 @@ window.createFormSection = function() {
         
         // Connect popup to buttons
         const iframeDoc = previewFrame.contentDocument;
-        
-        if (applyToAll && 
-            (buttonElement.classList.contains('cta-btn1') || 
-             buttonElement.classList.contains('btn-primary-custom') ||
-             buttonElement.classList.contains('cta-btn2') || 
-             buttonElement.classList.contains('btn-secondary-custom'))) {
+
+        if (applyToAll) {
+            let targetClass = null;
+            const classList = Array.from(buttonElement.classList);
             
-            // Get the target class
-            const targetClass = buttonElement.classList.contains('cta-btn1') || 
-                               buttonElement.classList.contains('btn-primary-custom') 
-                               ? '.cta-btn1, .btn-primary-custom' 
-                               : '.cta-btn2, .btn-secondary-custom';
-            
-            // Get all matching buttons
-            const allButtons = iframeDoc.querySelectorAll(targetClass);
-            
-            // Connect all buttons to this popup
-            allButtons.forEach(btn => {
-                btn.setAttribute('data-popup-id', popupId);
-                btn.setAttribute('onclick', `showModernPopup('${popupId}'); return false;`);
-                
-                // If button is in an <a> tag, prevent default navigation
-                if (btn.parentElement.tagName === 'A') {
-                    btn.parentElement.setAttribute('href', 'javascript:void(0);');
-                    btn.parentElement.setAttribute('onclick', `return false;`);
-                }
-            });
-        } else {
-            // Connect just this button
-            buttonElement.setAttribute('data-popup-id', popupId);
-            buttonElement.setAttribute('onclick', `showModernPopup('${popupId}'); return false;`);
-            
-            // If button is in an <a> tag, prevent default navigation
-            if (buttonElement.parentElement.tagName === 'A') {
-                buttonElement.parentElement.setAttribute('href', 'javascript:void(0);');
-                buttonElement.parentElement.setAttribute('onclick', `return false;`);
+            // Find the most specific class (not 'btn' or a utility class)
+            const significantClass = classList.find(c => c.includes('cta') || c.includes('button') || (c.includes('btn') && c.length > 3));
+
+            if (significantClass) {
+                targetClass = `.${significantClass}`;
+            } else if (buttonElement.classList.length > 0) {
+                // Fallback to the first class if no "significant" one is found
+                targetClass = `.${buttonElement.classList[0]}`;
             }
+
+            if (targetClass) {
+                const allButtons = iframeDoc.querySelectorAll(targetClass);
+                allButtons.forEach(btn => {
+                    // Check if the element is a valid button candidate before attaching
+                    if (isClickableButton(btn)) {
+                        attachToSingleButton(btn, popupId);
+                    }
+                });
+            } else {
+                 // If no class selector, fall back to single button attachment
+                 attachToSingleButton(buttonElement, popupId);
+            }
+        } else {
+            attachToSingleButton(buttonElement, popupId);
         }
         
         // Add popup to page
@@ -2471,6 +2480,17 @@ window.createFormSection = function() {
         
         // Add to history for undo/redo support
         addHistoryEntry();
+    }
+
+    function attachToSingleButton(buttonElement, popupId) {
+        buttonElement.setAttribute('data-popup-id', popupId);
+        buttonElement.setAttribute('onclick', `showModernPopup('${popupId}'); return false;`);
+
+        const parentLink = buttonElement.closest('a');
+        if (parentLink) {
+            parentLink.setAttribute('href', 'javascript:void(0);');
+            parentLink.setAttribute('onclick', `return false;`);
+        }
     }
 // Generate popup HTML based on template and options
     function generatePopupHTML(template, options) {
@@ -3465,24 +3485,6 @@ style.textContent = `
         });
     }
     // ====== Improved Popup Attach Mode (recognize anchors & CTA-like elements) ======
-    function isClickableButton(el){
-        if (!el || el.nodeType !== 1) return false;
-        const tag = el.tagName.toLowerCase();
-        const cls = (el.className || '').toString();
-        const role = el.getAttribute('role');
-        const isButtony = (tag==='button') || (tag==='a' && (el.hasAttribute('href') || role==='button'));
-        const looksLikeCTA = /(btn|button|cta|call\-to\-action)/i.test(cls);
-        const hasClick = !!(el.onclick || el.getAttribute('onclick'));
-        return isButtony || looksLikeCTA || hasClick || role==='button';
-    }
-    function findButtonCandidate(startEl){
-        let el = startEl, depth = 0;
-        while (el && depth < 4){
-            if (isClickableButton(el)) return el;
-            el = el.parentElement; depth++;
-        }
-        return null;
-    }
     window.enablePopupAttachMode = function(){
         const iframe = document.getElementById('previewFrame');
         const doc = iframe?.contentDocument || iframe?.contentWindow?.document;
