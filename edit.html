@@ -12,9 +12,9 @@
         1. TOP TOOLBAR (GLOBAL ACTIONS)
         ================================================================== -->		<div class="top-toolbar" id="topToolbar">
 			<div class="top-toolbar-left">
-				<button class="btn-top-toolbar" id="scrollToBottomBtn">HTML</button><button class="btn-top-toolbar" onclick="syncHtml()">Sync HTML</button><button class="btn-top-toolbar" disabled="disabled" id="undoBtn" onclick="undo()">Undo</button><button class="btn-top-toolbar" disabled="disabled" id="redoBtn" onclick="redo()">Redo</button><button class="btn-top-toolbar" onclick="clearAll()">Clear All</button></div>
+				<button class="btn-top-toolbar" id="scrollToBottomBtn">HTML</button><button class="btn-top-toolbar" id="syncHtmlBtn">Sync HTML</button><button class="btn-top-toolbar" disabled="disabled" id="undoBtn">Undo</button><button class="btn-top-toolbar" disabled="disabled" id="redoBtn">Redo</button><button class="btn-top-toolbar" id="clearAllBtn">Clear All</button></div>
 			<div class="top-toolbar-right">
-				<button class="btn-top-toolbar" onclick="downloadHtml()">Download</button><button class="btn-top-toolbar" onclick="toggleView('mobile')">Mobile</button><button class="btn-top-toolbar" onclick="toggleView('tablet')">Tablet</button><button class="btn-top-toolbar" onclick="toggleView('desktop')">Desktop</button><span class="badge bg-success" id="editingStatus">Editing Enabled</span></div>
+				<button class="btn-top-toolbar" id="downloadHtmlBtn">Download</button><button class="btn-top-toolbar" id="viewMobileBtn">Mobile</button><button class="btn-top-toolbar" id="viewTabletBtn">Tablet</button><button class="btn-top-toolbar" id="viewDesktopBtn">Desktop</button><span class="badge bg-success" id="editingStatus">Editing Enabled</span></div>
 		</div>
 <!-- =================================================================
         2. CONTEXTUAL TEXT TOOLBAR
@@ -32,7 +32,7 @@
 						Element Inspector</h3>
 					<button id="sidebar-toggle-btn" title="Toggle Sidebar"></button></div>
 				<div class="add-section-area">
-					<button class="add-section-btn" onclick="openSectionModal('library')">Add Section</button></div>
+					<button class="add-section-btn" id="addSectionBtn">Add Section</button></div>
 				<div id="inspector-content">
 					<div class="inspector-header-status">
 						<span id="elementTagName">Nothing selected</span></div>
@@ -46,7 +46,7 @@
 						<div class="control-group" id="responsiveControlGroup" style="display: none;">
 							<label class="switch-label">Responsive Edits <label class="switch"> <input id="responsiveToggle" type="checkbox" /> <span class="slider round"></span> </label> </label></div>
 						<div class="action-buttons">
-							<button class="action-btn delete" onclick="deleteElement()" title="Delete Element">Delete</button><button class="action-btn copy" onclick="copyElement()" title="Copy Element">Copy</button><button class="action-btn flip" onclick="flipElement()" title="Flip Layout">Flip</button></div>
+							<button class="action-btn delete" id="deleteElementBtn" title="Delete Element">Delete</button><button class="action-btn copy" id="copyElementBtn" title="Copy Element">Copy</button><button class="action-btn flip" id="flipElementBtn" title="Flip Layout">Flip</button></div>
 <!-- Accordions -->						<div class="accordion-item">
 							<h2 class="accordion-header">
 								<button class="accordion-button" data-bs-target="#collapseArrange" data-bs-toggle="collapse">Arrange</button></h2>
@@ -69,7 +69,7 @@
 									<div class="control-group" id="linkControlGroup">
 										<label for="linkUrlInput">Link URL</label> <input id="linkUrlInput" type="text" /> <label class="switch-label"> <span>Open in new window</span> <label class="switch"> <input id="linkTargetToggle" type="checkbox" /> <span class="slider round"></span> </label> </label></div>
 									<div class="control-group" id="iconControlGroup">
-										<label>Icon</label><button onclick="openHeroiconsModal()">Replace Icon</button>
+										<label>Icon</label><button id="replaceIconBtn">Replace Icon</button>
 										<hr />
 										<label for="iconSizeInput">Size (px)</label> <input class="full-width-input" id="iconSizeInput" min="1" type="number" /> <label for="iconColorInput">Color</label> <input id="iconColorInput" type="color" /></div>
 								</div>
@@ -174,14 +174,14 @@
 				HTML Code</h3>
 			<textarea id="htmlInputBottom" placeholder="Your site's HTML will appear here after syncing..."></textarea>
 			<div class="html-editor-actions">
-				<button class="btn-primary" onclick="updatePreviewFromBottom()">Preview</button><button class="btn-secondary" id="scrollToTopBtn">Back to Top</button></div>
+				<button class="btn-primary" id="updatePreviewBtn">Preview</button><button class="btn-secondary" id="scrollToTopBtn">Back to Top</button></div>
 		</div>
 		<div class="modal-overlay" id="heroiconsModal" style="display: none;">
 			<div class="modal-content">
 				<div class="modal-header">
 					<h2>
 						Select an Icon</h2>
-					<button class="close-btn" onclick="closeHeroiconsModal()">&times;</button></div>
+					<button class="close-btn" id="closeHeroiconsModalBtn">&times;</button></div>
 				<div class="modal-toolbar">
 					<div class="icon-style-tabs">
 						<button class="active" id="outlineTab">Outline</button><button id="solidTab">Solid</button></div>
@@ -199,7 +199,7 @@
 				<div class="modal-header">
 					<h2 id="sectionModalTitle">
 						Add a New Section</h2>
-					<button class="close-btn" onclick="closeSectionModal()">&times;</button></div>
+					<button class="close-btn" id="closeSectionModalBtn">&times;</button></div>
 				<div class="modal-body" id="sectionModalBody">
 					&nbsp;</div>
 			</div>
